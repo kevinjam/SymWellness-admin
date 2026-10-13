@@ -1,0 +1,219 @@
+@import "tailwindcss";
+@import "@fontsource-variable/inter";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---- Design tokens (light) ------------------------------------------------ */
+:root {
+  --canvas: #f4f5fa;
+  --panel: #ffffff;
+  --panel-2: #f8f9fc;
+  --line: #e7e9f1;
+  --line-strong: #d3d8e6;
+
+  --ink: #0e1530;
+  --ink-2: #4a5470;
+  --ink-3: #8a92ab;
+
+  --brand: #3a56e0;
+  --brand-hover: #2f48c4;
+  --brand-soft: #eaeefe;
+  --brand-ink: #2238b0;
+  --navy: #14224f;
+
+  --ok: #12945f;
+  --ok-soft: #e4f6ec;
+  --warn: #c26a05;
+  --warn-soft: #fdf1dc;
+  --bad: #d32f4a;
+  --bad-soft: #fdebee;
+  --info: #0b86c9;
+  --info-soft: #e2f3fc;
+  --violet: #6d4de6;
+  --violet-soft: #efebff;
+
+  --sh-card: 0 1px 2px rgb(16 24 64 / 0.04), 0 10px 28px -14px rgb(16 24 64 / 0.12);
+  --sh-pop: 0 4px 12px rgb(16 24 64 / 0.08), 0 24px 56px -16px rgb(16 24 64 / 0.28);
+  --ring: 0 0 0 3px rgb(58 86 224 / 0.22);
+  color-scheme: light;
+}
+
+/* ---- Design tokens (dark) ------------------------------------------------- */
+.dark {
+  --canvas: #090d19;
+  --panel: #10162a;
+  --panel-2: #141b32;
+  --line: #222a44;
+  --line-strong: #323c5e;
+
+  --ink: #eef1fb;
+  --ink-2: #a8b0ca;
+  --ink-3: #6f7898;
+
+  --brand: #6f89ff;
+  --brand-hover: #8aa0ff;
+  --brand-soft: #1a2352;
+  --brand-ink: #b3c0ff;
+  --navy: #0b1230;
+
+  --ok: #3ddba2;
+  --ok-soft: #0f2a22;
+  --warn: #f5b84a;
+  --warn-soft: #2c2312;
+  --bad: #ff7b91;
+  --bad-soft: #2f1620;
+  --info: #4cc2ff;
+  --info-soft: #0e2433;
+  --violet: #b09bff;
+  --violet-soft: #221c45;
+
+  --sh-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 10px 28px -14px rgb(0 0 0 / 0.55);
+  --sh-pop: 0 4px 12px rgb(0 0 0 / 0.4), 0 24px 56px -16px rgb(0 0 0 / 0.7);
+  --ring: 0 0 0 3px rgb(111 137 255 / 0.3);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --color-canvas: var(--canvas);
+  --color-panel: var(--panel);
+  --color-panel-2: var(--panel-2);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-ink: var(--brand-ink);
+  --color-navy: var(--navy);
+
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-bad: var(--bad);
+  --color-bad-soft: var(--bad-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-violet: var(--violet);
+  --color-violet-soft: var(--violet-soft);
+
+  --shadow-card: var(--sh-card);
+  --shadow-pop: var(--sh-pop);
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    margin: 0;
+    background: var(--canvas);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    font-feature-settings: "cv11", "ss01", "ss03";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--brand) 28%, transparent);
+  }
+  *:focus-visible {
+    outline: none;
+    box-shadow: var(--ring);
+    border-radius: 10px;
+  }
+  button {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--line-strong);
+    border-radius: 999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--ink-3);
+    background-clip: content-box;
+    border: 3px solid transparent;
+  }
+}
+
+/* Numbers should line up in columns. */
+.num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum", "cv11";
+}
+
+/* Soft page-load / content transitions. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.rise {
+  animation: rise 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--line);
+  border-radius: 8px;
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--panel) 70%, transparent), transparent);
+  animation: shimmer 1.4s infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rise,
+  .skeleton::after {
+    animation: none;
+  }
+}
+
+/* Brand gradient used for hero surfaces and the logo mark. */
+.brand-gradient {
+  background:
+    radial-gradient(120% 140% at 0% 0%, #5b7bff 0%, rgba(91, 123, 255, 0) 55%),
+    linear-gradient(135deg, #3a56e0 0%, #14224f 100%);
+}
+.hairline {
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.theme-switching *,
+.theme-switching *::before,
+.theme-switching *::after {
+  transition: none !important;
+}
