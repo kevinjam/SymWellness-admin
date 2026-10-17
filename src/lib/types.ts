@@ -439,6 +439,22 @@ export interface Testimonial {
   exists: boolean;
 }
 
+export interface OnboardingGoalTile {
+  id: string;
+  label: string;
+  backgroundColor: string;
+}
+
+export interface OnboardingCopy {
+  goalsTitle: string;
+  goalsSubtitle: string;
+  primaryGoalTitle: string;
+  goalTiles: OnboardingGoalTile[];
+  primaryGoalOptions: string[];
+  active: boolean;
+  exists: boolean;
+}
+
 export interface Book {
   id: string;
   bookId: string;

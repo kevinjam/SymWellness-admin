@@ -9,6 +9,7 @@ import type {
   DoctorFull,
   InsightFull,
   InsightInput,
+  OnboardingCopy,
   Testimonial,
   AuditList,
   BillingDetails,
@@ -96,6 +97,11 @@ export const admin = {
     api.get<Testimonial>('/api/admin/content/testimonial', undefined, signal),
   saveTestimonial: (input: Omit<Testimonial, 'exists'>) =>
     api.put<{ saved: boolean }>('/api/admin/content/testimonial', input),
+
+  onboardingCopy: (signal?: AbortSignal) =>
+    api.get<OnboardingCopy>('/api/admin/content/onboarding-copy', undefined, signal),
+  saveOnboardingCopy: (input: Omit<OnboardingCopy, 'exists'>) =>
+    api.put<{ saved: boolean }>('/api/admin/content/onboarding-copy', input),
 
   books: (q: Query, signal?: AbortSignal) => api.get<BookList>('/api/admin/books', q, signal),
   saveBook: (id: string | null, input: Partial<Book>) =>

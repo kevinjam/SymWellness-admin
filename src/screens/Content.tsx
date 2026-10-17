@@ -3,7 +3,7 @@ import { BookOpen, Newspaper, Pencil, Plus, Quote, Trash2 } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import { admin } from '../lib/endpoints';
 import { fmtDate, titleCase } from '../lib/format';
-import type { Book, InsightInput, Testimonial } from '../lib/types';
+import type { Book, InsightInput, OnboardingCopy, Testimonial } from '../lib/types';
 import { useResource } from '../lib/useResource';
 import {
   Badge, Button, Card, CardHeader, EmptyState, ErrorState, Field, Input, PageHeader, Pagination, Segmented,
@@ -11,7 +11,7 @@ import {
 } from '../ui/kit';
 import { ConfirmDialog, Drawer, useToast } from '../ui/overlay';
 
-type Tab = 'insights' | 'testimonial' | 'books';
+type Tab = 'insights' | 'onboarding' | 'testimonial' | 'books';
 
 export function Content() {
   const [tab, setTab] = useState<Tab>('insights');
@@ -24,7 +24,8 @@ export function Content() {
           <Segmented
             options={[
               { label: 'Daily insights', value: 'insights' as Tab },
-              { label: 'Onboarding quote', value: 'testimonial' as Tab },
+              { label: 'Onboarding screens', value: 'onboarding' as Tab },
+              { label: 'Expert quote', value: 'testimonial' as Tab },
               { label: 'Curated books', value: 'books' as Tab },
             ]}
             value={tab}
@@ -32,7 +33,15 @@ export function Content() {
           />
         }
       />
-      {tab === 'insights' ? <Insights /> : tab === 'testimonial' ? <TestimonialEditor /> : <Books />}
+      {tab === 'insights' ? (
+        <Insights />
+      ) : tab === 'onboarding' ? (
+        <OnboardingCopyEditor />
+      ) : tab === 'testimonial' ? (
+        <TestimonialEditor />
+      ) : (
+        <Books />
+      )}
     </div>
   );
 }
@@ -290,6 +299,241 @@ function InsightEditor({
   );
 }
 
+/* ------------------------------------------------------ Onboarding screens */
+
+const GOAL_ILLUSTRATION_OPTIONS = [
+  { id: 'nutrition', label: 'Nutrition' },
+  { id: 'fitness', label: 'Fitness' },
+  { id: 'supps', label: 'Supplements' },
+  { id: 'journal', label: 'Journal' },
+  { id: 'scan', label: 'Food scan' },
+  { id: 'sleep', label: 'Sleep' },
+  { id: 'calories', label: 'Calories' },
+  { id: 'water', label: 'Water' },
+  { id: 'progress', label: 'Progress' },
+  { id: 'bell', label: 'Reminders' },
+  { id: 'doctor', label: 'Care' },
+  { id: 'happy', label: 'Mood (positive)' },
+  { id: 'sad', label: 'Mood (low)' },
+  { id: 'star', label: 'Highlights' },
+] as const;
+
+function OnboardingCopyEditor() {
+  const toast = useToast();
+  const { me } = useAuth();
+  const canEdit = Boolean(me?.isSuperAdmin);
+  const res = useResource((s) => admin.onboardingCopy(s), []);
+  const [form, setForm] = useState<Omit<OnboardingCopy, 'exists'> | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (res.data) {
+      const { exists: _exists, ...rest } = res.data;
+      void _exists;
+      setForm(rest);
+    }
+  }, [res.data]);
+
+  if (res.loading || !form) {
+    return res.error && !res.data ? <ErrorState error={res.error} onRetry={res.reload} /> : <Skeleton className="h-64 w-full" />;
+  }
+  const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) => setForm({ ...form, [k]: v });
+  const valid =
+    form.goalsTitle.trim() &&
+    form.goalsSubtitle.trim() &&
+    form.primaryGoalTitle.trim() &&
+    form.goalTiles.length > 0 &&
+    form.goalTiles.every((t) => t.id && t.label.trim()) &&
+    form.primaryGoalOptions.length > 0 &&
+    form.primaryGoalOptions.every((o) => o.trim());
+
+  const save = async () => {
+    setBusy(true);
+    try {
+      await admin.saveOnboardingCopy(form);
+      toast.success('Onboarding copy saved');
+      res.reload();
+    } catch (err) {
+      toast.error('Could not save', (err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader
+        title="Goal picker screens"
+        subtitle="Headlines on the first feature-onboarding steps in the mobile app."
+      />
+      {!res.data?.exists && (
+        <p className="mb-4 rounded-xl bg-panel-2 px-3.5 py-2.5 text-[13px] text-ink-2 hairline">
+          Nothing saved yet — the app uses built-in defaults until you save here.
+        </p>
+      )}
+      <div className="space-y-4">
+        <Field label="Goals grid title" hint='e.g. "What can we help you with?"'>
+          <Input value={form.goalsTitle} maxLength={160} disabled={!canEdit}
+            onChange={(e) => set('goalsTitle', e.target.value)} />
+        </Field>
+        <Field label="Goals grid subtitle" hint='Shown under the title, e.g. "Choose as many as you&apos;d like."'>
+          <Input value={form.goalsSubtitle} maxLength={200} disabled={!canEdit}
+            onChange={(e) => set('goalsSubtitle', e.target.value)} />
+        </Field>
+        <Field label="Primary goal title" hint='Single-choice step, e.g. "What would you like SymWellness to help you with most?"'>
+          <Textarea rows={2} maxLength={200} value={form.primaryGoalTitle} disabled={!canEdit}
+            onChange={(e) => set('primaryGoalTitle', e.target.value)} />
+        </Field>
+
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-[13px] font-medium text-ink-2">Goals grid options</span>
+            {canEdit && form.goalTiles.length < 12 && (
+              <Button
+                size="sm"
+                variant="ghost"
+                icon={Plus}
+                onClick={() =>
+                  set('goalTiles', [
+                    ...form.goalTiles,
+                    { id: 'nutrition', label: '', backgroundColor: '#EDF7ED' },
+                  ])
+                }
+              >
+                Add tile
+              </Button>
+            )}
+          </div>
+          <div className="space-y-3">
+            {form.goalTiles.map((tile, i) => (
+              <div key={i} className="grid gap-2 rounded-xl bg-panel-2 p-3 hairline sm:grid-cols-[140px_1fr_120px_auto]">
+                <Field label="Icon">
+                  <Select
+                    value={tile.id}
+                    disabled={!canEdit}
+                    onChange={(e) =>
+                      set(
+                        'goalTiles',
+                        form.goalTiles.map((t, j) => (j === i ? { ...t, id: e.target.value } : t)),
+                      )
+                    }
+                  >
+                    {GOAL_ILLUSTRATION_OPTIONS.map((opt) => (
+                      <option key={opt.id} value={opt.id}>{opt.label}</option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field label="Label" hint="Line breaks allowed for two-line tiles.">
+                  <Textarea
+                    rows={2}
+                    maxLength={80}
+                    value={tile.label}
+                    disabled={!canEdit}
+                    onChange={(e) =>
+                      set(
+                        'goalTiles',
+                        form.goalTiles.map((t, j) => (j === i ? { ...t, label: e.target.value } : t)),
+                      )
+                    }
+                  />
+                </Field>
+                <Field label="Tile color">
+                  <Input
+                    value={tile.backgroundColor}
+                    disabled={!canEdit}
+                    placeholder="#EDF7ED"
+                    onChange={(e) =>
+                      set(
+                        'goalTiles',
+                        form.goalTiles.map((t, j) =>
+                          j === i ? { ...t, backgroundColor: e.target.value } : t,
+                        ),
+                      )
+                    }
+                  />
+                </Field>
+                {canEdit && (
+                  <div className="flex items-end justify-end pb-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      icon={Trash2}
+                      aria-label="Remove tile"
+                      disabled={form.goalTiles.length <= 1}
+                      onClick={() =>
+                        set('goalTiles', form.goalTiles.filter((_, j) => j !== i))
+                      }
+                    />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-[13px] font-medium text-ink-2">Primary goal choices</span>
+            {canEdit && form.primaryGoalOptions.length < 10 && (
+              <Button
+                size="sm"
+                variant="ghost"
+                icon={Plus}
+                onClick={() => set('primaryGoalOptions', [...form.primaryGoalOptions, ''])}
+              >
+                Add option
+              </Button>
+            )}
+          </div>
+          <div className="space-y-2">
+            {form.primaryGoalOptions.map((opt, i) => (
+              <div key={i} className="flex gap-2">
+                <Input
+                  value={opt}
+                  maxLength={120}
+                  disabled={!canEdit}
+                  placeholder="e.g. Tracking my nutrition"
+                  onChange={(e) =>
+                    set(
+                      'primaryGoalOptions',
+                      form.primaryGoalOptions.map((o, j) => (j === i ? e.target.value : o)),
+                    )
+                  }
+                />
+                {canEdit && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    icon={Trash2}
+                    aria-label="Remove option"
+                    disabled={form.primaryGoalOptions.length <= 1}
+                    onClick={() =>
+                      set(
+                        'primaryGoalOptions',
+                        form.primaryGoalOptions.filter((_, j) => j !== i),
+                      )
+                    }
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between rounded-xl bg-panel-2 px-4 py-3 hairline">
+          <span className="text-sm font-medium text-ink">Use custom copy in the app</span>
+          <Toggle label="Use custom copy" checked={form.active} disabled={!canEdit} onChange={(v) => set('active', v)} />
+        </div>
+        {canEdit && (
+          <div className="flex justify-end">
+            <Button variant="primary" loading={busy} disabled={!valid} onClick={save}>Save copy</Button>
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+}
+
 /* ------------------------------------------------------------ Testimonial */
 
 function TestimonialEditor() {
@@ -330,7 +574,7 @@ function TestimonialEditor() {
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
       <Card>
-        <CardHeader title="Onboarding quote" subtitle="The testimonial shown on the welcome screens." />
+        <CardHeader title="Expert quote" subtitle="Dr. Fry-style testimonial on feature onboarding (no app release needed)." />
         {!res.data?.exists && (
           <p className="mb-4 rounded-xl bg-panel-2 px-3.5 py-2.5 text-[13px] text-ink-2 hairline">
             Nothing saved yet, so the app shows its built-in quote. Saving here replaces it.
